@@ -1,0 +1,103 @@
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+    <!-- Cấu hình Thread Pool -->
+    <Arg name="threadpool">
+        <New id="threadpool" class="org.eclipse.jetty.util.thread.QueuedThreadPool">
+            <Set name="minThreads">10</Set>
+            <Set name="maxThreads">200</Set>
+        </New>
+    </Arg>
+
+    <!-- Cấu hình ByteBufferPool -->
+    <Call name="addBean">
+        <Arg>
+            <New id="byteBufferPool" class="org.eclipse.jetty.io.ArrayByteBufferPool"/>
+        </Arg>
+    </Call>
+
+    <!-- Cấu hình Scheduler -->
+    <Call name="addBean">
+        <Arg>
+            <New class="org.eclipse.jetty.util.thread.ScheduledExecutorScheduler">
+                <Arg name="name"><Property name="jetty.scheduler.name" default="jetty-scheduler"/></Arg>
+                <Arg name="daemon" type="boolean"><Property name="jetty.scheduler.daemon" default="false" /></Arg>
+                <Arg name="threads" type="int"><Property name="jetty.scheduler.threads" default="-1" /></Arg>
+            </New>
+        </Arg>
+    </Call>
+
+    <!-- Cấu hình HttpConfiguration -->
+    <New id="httpConfig" class="org.eclipse.jetty.server.HttpConfiguration">
+        <Set name="outputBufferSize">32768</Set>
+        <Set name="requestHeaderSize">8192</Set>
+        <Set name="responseHeaderSize">8192</Set>
+        <Set name="sendServerVersion">true</Set>
+        <Set name="sendDateHeader">false</Set>
+        <Set name="headerCacheSize">512</Set>
+    </New>
+
+    <!-- Cấu hình Connector cho môi trường Development (localhost) -->
+    <Call name="addConnector">
+        <Arg>
+            <New id="DevelopmentConnector" class="org.eclipse.jetty.server.ServerConnector">
+                <Arg name="server"><Ref refid="Server"/></Arg>
+                <Arg name="factories">
+                    <Array type="org.eclipse.jetty.server.ConnectionFactory">
+                        <Item>
+                            <New class="org.eclipse.jetty.server.HttpConnectionFactory">
+                                <Arg name="config"><Ref refid="httpConfig"/></Arg>
+                            </New>
+                        </Item>
+                    </Array>
+                </Arg>
+                <Set name="host"><Property name="jetty.host" default="localhost"/></Set>
+                <Set name="port"><Property name="jetty.port" default="8080"/></Set>
+                <Set name="idleTimeout">30000</Set>
+            </New>
+        </Arg>
+    </Call>
+
+    <!-- Cấu hình Connector cho môi trường Server (host cụ thể) -->
+    <Call name="addConnector">
+        <Arg>
+            <New id="ProductionConnector" class="org.eclipse.jetty.server.ServerConnector">
+                <Arg name="server"><Ref refid="Server"/></Arg>
+                <Arg name="factories">
+                    <Array type="org.eclipse.jetty.server.ConnectionFactory">
+                        <Item>
+                            <New class="org.eclipse.jetty.server.HttpConnectionFactory">
+                                <Arg name="config"><Ref refid="httpConfig"/></Arg>
+                            </New>
+                        </Item>
+                    </Array>
+                </Arg>
+                <Set name="host"><Property name="jetty.server.host" default="0.0.0.0"/></Set>
+                <Set name="port"><Property name="jetty.server.port" default="9090"/></Set>
+                <Set name="idleTimeout">30000</Set>
+            </New>
+        </Arg>
+    </Call>
+
+    <!-- Cấu hình Handler -->
+    <Set name="handler">
+        <New id="Handlers" class="org.eclipse.jetty.server.handler.HandlerCollection">
+            <Set name="handlers">
+                <Array type="org.eclipse.jetty.server.Handler">
+                    <Item>
+                        <New id="Contexts" class="org.eclipse.jetty.server.handler.ContextHandlerCollection"/>
+                    </Item>
+                    <Item>
+                        <New id="DefaultHandler" class="org.eclipse.jetty.server.handler.DefaultHandler"/>
+                    </Item>
+                </Array>
+            </Set>
+        </New>
+    </Set>
+
+    <!-- Cấu hình các tùy chọn server bổ sung -->
+    <Set name="stopAtShutdown">true</Set>
+    <Set name="stopTimeout">5000</Set>
+    <Set name="dumpAfterStart">false</Set>
+    <Set name="dumpBeforeStop">false</Set>
+
+</Configure>
